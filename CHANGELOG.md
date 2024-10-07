@@ -2,6 +2,17 @@
 
 All notable changes to this project will be documented in this file.
 
+## [0.2.1] - 2024-10-07
+
+### 🚀 Features
+
+- First working meshrenderer
+
+### 🐛 Bug Fixes
+
+- Corrected roation of transfrom
+
+
 ## [0.2.0] - 2024-10-02
 
 ### 🚀 Features

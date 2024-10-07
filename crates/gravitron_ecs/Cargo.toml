@@ -1,6 +1,6 @@
 [package]
 name = "gravitron_ecs"
-version = "0.2.0"
+version = "0.2.1"
 edition = "2021"
 license = "MIT OR Apache-2.0"
 keywords = ["ecs", "game", "gravitron"]
@@ -11,7 +11,7 @@ exclude = ["CHANGELOG.md"]
 readme = "README.md"
 
 [dependencies]
-gravitron_ecs_macros = { path = "./gravitron_ecs_macros" , version = "0.1.3" }
+gravitron_ecs_macros = { path = "./gravitron_ecs_macros" , version = "0.1.4" }
 gravitron_utils = { path = "../gravitron_utils" , version = "0.1.2" }
 downcast = "0.11.0"
 log = "0.4.22"

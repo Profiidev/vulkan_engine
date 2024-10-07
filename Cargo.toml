@@ -3,7 +3,7 @@ members = ["crates/gravitron_ecs", "crates/gravitron_utils"]
 
 [package]
 name = "gravitron"
-version = "0.2.0"
+version = "0.2.1"
 edition = "2021"
 license = "MIT OR Apache-2.0"
 description = "A GameEngine based on an ECS and Vulkan"
@@ -23,7 +23,7 @@ thiserror = "1.0.64"
 vk-shader-macros = "0.2.9"
 winit = { version = "0.30.0" }
 gravitron_utils = { path = "./crates/gravitron_utils", version = "0.1.2" }
-gravitron_ecs = { path = "./crates/gravitron_ecs", version = "0.2.0" }
+gravitron_ecs = { path = "./crates/gravitron_ecs", version = "0.2.1" }
 log = "0.4.22"
 env_logger = "0.11.5"
 

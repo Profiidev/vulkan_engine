@@ -2,6 +2,18 @@
 
 All notable changes to this project will be documented in this file.
 
+## [0.2.1] - 2024-10-07
+
+### 🐛 Bug Fixes
+
+- Ecs storage edges correct id
+- Set componentid type correctly
+
+### 🚜 Refactor
+
+- Switched to typeid for components
+
+
 ## [0.2.0] - 2024-10-02
 
 ### 🚀 Features
