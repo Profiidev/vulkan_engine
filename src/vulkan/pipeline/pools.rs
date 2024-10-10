@@ -9,6 +9,7 @@ pub struct Pools {
   graphics_buffers: Vec<vk::CommandBuffer>,
   transfer_buffers: Vec<vk::CommandBuffer>,
   compute_buffers: Vec<vk::CommandBuffer>,
+  logical_device: ash::Device,
 }
 
 impl Pools {
@@ -41,23 +42,36 @@ impl Pools {
       graphics_buffers: Vec::new(),
       transfer_buffers: Vec::new(),
       compute_buffers: Vec::new(),
+      logical_device: logical_device.clone(),
     })
   }
 
-  pub unsafe fn cleanup(&self, logical_device: &ash::Device) {
+  pub unsafe fn cleanup(&self) {
     if !self.graphics_buffers.is_empty() {
-      logical_device.free_command_buffers(self.command_pool_graphics, &self.graphics_buffers);
+      self
+        .logical_device
+        .free_command_buffers(self.command_pool_graphics, &self.graphics_buffers);
     }
     if !self.compute_buffers.is_empty() {
-      logical_device.free_command_buffers(self.command_pool_compute, &self.compute_buffers);
+      self
+        .logical_device
+        .free_command_buffers(self.command_pool_compute, &self.compute_buffers);
     }
     if !self.transfer_buffers.is_empty() {
-      logical_device.free_command_buffers(self.command_pool_transfer, &self.transfer_buffers);
+      self
+        .logical_device
+        .free_command_buffers(self.command_pool_transfer, &self.transfer_buffers);
     }
 
-    logical_device.destroy_command_pool(self.command_pool_graphics, None);
-    logical_device.destroy_command_pool(self.command_pool_transfer, None);
-    logical_device.destroy_command_pool(self.command_pool_compute, None);
+    self
+      .logical_device
+      .destroy_command_pool(self.command_pool_graphics, None);
+    self
+      .logical_device
+      .destroy_command_pool(self.command_pool_transfer, None);
+    self
+      .logical_device
+      .destroy_command_pool(self.command_pool_compute, None);
   }
 
   pub fn create_command_buffers(

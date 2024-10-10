@@ -123,6 +123,7 @@ unsafe extern "system" fn vulkan_debug_utils_callback(
         .replace("Validation Information: [ UNASSIGNED-DEBUG-PRINTF ]", "");
       log::debug!("[printf] {:?}", msg);
     } else if !p_user_data.is_null() {
+      #[cfg(feature = "debug")]
       log::trace!("[{}] {:?}", ty, message)
     }
   } else {

@@ -3,6 +3,7 @@ use std::{
   sync::atomic::{AtomicU64, Ordering},
 };
 
+#[cfg(feature = "debug")]
 use log::trace;
 
 use gravitron_ecs_macros::all_tuples;
@@ -19,6 +20,7 @@ static SYSTEM_ID: AtomicU64 = AtomicU64::new(0);
 pub trait System: Send {
   fn run(&mut self, world: UnsafeWorldCell<'_>);
   fn get_meta(&self) -> &SystemMeta;
+  fn get_id(&self) -> SystemId;
 }
 
 macro_rules! impl_system {
@@ -32,6 +34,7 @@ macro_rules! impl_system {
         FnMut($(<$params as SystemParam>::Item<'b>),*)
     {
       fn run(&mut self, world: UnsafeWorldCell<'_>) {
+        #[cfg(feature = "debug")]
         trace!("Executing System {}", self.id);
         #[allow(clippy::too_many_arguments)]
         fn call_inner<$($params),*>(
@@ -50,6 +53,10 @@ macro_rules! impl_system {
 
       fn get_meta(&self) -> &SystemMeta {
         &self.meta
+      }
+
+      fn get_id(&self) -> SystemId {
+        self.id
       }
     }
 

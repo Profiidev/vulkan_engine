@@ -5,6 +5,7 @@ use std::{
   ptr,
 };
 
+#[allow(unused_imports)]
 use log::{debug, trace};
 
 use crate::{
@@ -30,6 +31,7 @@ impl World {
   }
 
   pub fn set_resource<R: 'static>(&mut self, res: R) {
+    #[cfg(feature = "debug")]
     trace!("Setting Resource {}", std::any::type_name::<R>());
 
     self.resources.insert(TypeId::of::<R>(), Box::new(res));
@@ -37,13 +39,16 @@ impl World {
 
   pub fn add_resource<R: 'static>(&mut self, res: R) {
     debug!("Adding Resource {}", std::any::type_name::<R>());
-    if self.get_resource::<R>().is_some() {
+
+    let id = TypeId::of::<R>();
+    if self.resources.contains_key(&id) {
       return;
     }
-    self.resources.insert(TypeId::of::<R>(), Box::new(res));
+    self.resources.insert(id, Box::new(res));
   }
 
   pub fn get_resource<R: 'static>(&self) -> Option<&R> {
+    #[cfg(feature = "debug")]
     trace!("Getting Resource {}", std::any::type_name::<R>());
 
     if let Some(res) = self.resources.get(&TypeId::of::<R>()) {
@@ -54,6 +59,7 @@ impl World {
   }
 
   pub fn get_resource_mut<R: 'static>(&mut self) -> Option<&mut R> {
+    #[cfg(feature = "debug")]
     trace!("Getting Resource mutably {}", std::any::type_name::<R>());
 
     if let Some(res) = self.resources.get_mut(&TypeId::of::<R>()) {
@@ -64,6 +70,7 @@ impl World {
   }
 
   pub fn get_commands_mut(&mut self, id: SystemId) -> &mut Commands {
+    #[cfg(feature = "debug")]
     trace!("Getting Commands");
 
     let world = UnsafeWorldCell::new(self);
@@ -72,6 +79,7 @@ impl World {
   }
 
   pub fn execute_commands(&mut self) {
+    #[cfg(feature = "debug")]
     trace!("Executing Commands");
 
     for cmds in self.commands.values_mut() {

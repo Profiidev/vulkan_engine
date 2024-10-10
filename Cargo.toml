@@ -29,7 +29,7 @@ env_logger = "0.11.5"
 
 [features]
 default = ["debug", "wayland"]
-debug = []
+debug = ["gravitron_ecs/debug"]
 wayland = ["winit/wayland"]
 
 [lib]

@@ -1,4 +1,4 @@
-use std::any::TypeId;
+use std::{any::TypeId, hash::Hash};
 
 use entity::IntoEntity;
 use scheduler::{Scheduler, SchedulerBuilder};
@@ -27,9 +27,8 @@ pub struct ECS {
   pub world_cell: UnsafeWorldCell<'static>,
 }
 
-#[derive(Default)]
-pub struct ECSBuilder {
-  scheduler: SchedulerBuilder,
+pub struct ECSBuilder<K: Ord + Hash + Clone = usize> {
+  scheduler: SchedulerBuilder<K>,
   world: World,
   sync_system_exec: bool,
 }
@@ -56,7 +55,7 @@ impl ECS {
   }
 }
 
-impl ECSBuilder {
+impl<K: Ord + Hash + Clone> ECSBuilder<K> {
   pub fn new() -> Self {
     Self::default()
   }
@@ -67,6 +66,14 @@ impl ECSBuilder {
 
   pub fn add_system<I, S: System + 'static>(&mut self, system: impl IntoSystem<I, System = S>) {
     self.scheduler.add_system(system);
+  }
+
+  pub fn add_system_at_stage<I, S: System + 'static>(
+    &mut self,
+    system: impl IntoSystem<I, System = S>,
+    relative_stage: K,
+  ) {
+    self.scheduler.add_system_at_stage(system, relative_stage);
   }
 
   pub fn add_resource<R: 'static>(&mut self, res: R) {
@@ -84,6 +91,16 @@ impl ECSBuilder {
       scheduler: self.scheduler.build(self.sync_system_exec),
       world: self.world,
       world_cell,
+    }
+  }
+}
+
+impl<K: Ord + Clone + Hash> Default for ECSBuilder<K> {
+  fn default() -> Self {
+    Self {
+      scheduler: Default::default(),
+      world: Default::default(),
+      sync_system_exec: Default::default(),
     }
   }
 }

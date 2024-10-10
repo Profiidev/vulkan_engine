@@ -9,7 +9,7 @@ pub struct AppConfig {
 impl Default for AppConfig {
   fn default() -> Self {
     Self {
-      title: "Rust Vulkan".to_string(),
+      title: "Gravitron".to_string(),
       version: 1,
       width: 800,
       height: 600,

@@ -5,6 +5,7 @@ use std::{
   sync::{Arc, Mutex},
 };
 
+#[cfg(feature = "debug")]
 use log::trace;
 
 use crate::{components::Component, ArchetypeId, ComponentId, EntityId};
@@ -85,6 +86,7 @@ impl<'a> Storage<'a> {
   }
 
   pub fn create_entity_with_id(&mut self, mut comps: Vec<Box<dyn Component>>, id: EntityId) {
+    #[cfg(feature = "debug")]
     trace!("Creating Entity {}", id);
 
     comps.sort_unstable_by_key(|c| c.id());
@@ -110,6 +112,7 @@ impl<'a> Storage<'a> {
   }
 
   pub fn reserve_entity_id(&mut self) -> EntityId {
+    #[cfg(feature = "debug")]
     trace!("Reserving EntityId");
     //lock
     let _lock = self.reserve_lock.lock().unwrap();
@@ -124,6 +127,7 @@ impl<'a> Storage<'a> {
   }
 
   pub fn remove_entity(&mut self, entity: EntityId) {
+    #[cfg(feature = "debug")]
     trace!("Removing Entity {}", entity);
     let record = self.entity_index.remove(&entity).unwrap();
     let archetype = unsafe { record.archetype.archetype_mut() };
@@ -140,6 +144,7 @@ impl<'a> Storage<'a> {
   }
 
   pub fn create_archetype(&mut self, type_: Type) {
+    #[cfg(feature = "debug")]
     trace!("Creating Archetype {:?}", type_);
 
     let archetype = Archetype {
@@ -180,6 +185,7 @@ impl<'a> Storage<'a> {
   }
 
   pub fn add_comp(&mut self, entity: EntityId, comp: Box<dyn Component>) {
+    #[cfg(feature = "debug")]
     trace!("Adding Component {:?} to Entity {}", comp.id(), entity);
 
     let record = self.entity_index.get_mut(&entity).unwrap();
@@ -234,6 +240,7 @@ impl<'a> Storage<'a> {
   }
 
   pub fn remove_comp(&mut self, entity: EntityId, comp: ComponentId) {
+    #[cfg(feature = "debug")]
     trace!("Removing Component {:?} from Entity {}", comp, entity);
 
     let record = self.entity_index.get_mut(&entity).unwrap();

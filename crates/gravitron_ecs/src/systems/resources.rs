@@ -65,6 +65,6 @@ impl<'res, T: 'static> SystemParam for ResMut<'res, T> {
   }
 
   fn check_metadata(meta: &mut SystemMeta) {
-    meta.add_res::<T>(metadata::AccessType::Read);
+    meta.add_res::<T>(metadata::AccessType::Write);
   }
 }

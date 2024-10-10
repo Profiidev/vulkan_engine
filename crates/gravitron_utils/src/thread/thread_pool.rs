@@ -1,5 +1,6 @@
 use std::{sync::mpsc, thread};
 
+#[cfg(feature = "debug")]
 use log::trace;
 
 use crate::thread::Mutator;
@@ -19,6 +20,7 @@ type Job = Box<dyn FnOnce() + Send + 'static>;
 impl ThreadPool {
   pub fn new(size: usize) -> Self {
     assert!(size > 0);
+    #[cfg(feature = "debug")]
     trace!("Creating ThreadPool with {} Workers", size);
 
     let (sender, receiver) = mpsc::channel();
@@ -45,6 +47,7 @@ impl ThreadPool {
 
 impl Drop for ThreadPool {
   fn drop(&mut self) {
+    #[cfg(feature = "debug")]
     trace!("Sending terminate message to workers");
     for _ in &mut self.workers {
       self.sender.send(Message::Terminate).unwrap();
@@ -61,16 +64,19 @@ struct Worker {
 }
 
 impl Worker {
+  #[allow(unused_variables)]
   fn new(id: usize, receiver: Mutator<mpsc::Receiver<Message>>) -> Self {
     let thread = thread::spawn(move || loop {
       let message = receiver.get().recv().unwrap();
 
       match message {
         Message::NewJob(job) => {
+          #[cfg(feature = "debug")]
           trace!("Worker {} got job", id);
           job();
         }
         Message::Terminate => {
+          #[cfg(feature = "debug")]
           trace!("Terminating Worker {}", id);
           break;
         }

@@ -1,3 +1,4 @@
+#[cfg(feature = "debug")]
 use log::trace;
 
 use crate::{
@@ -30,6 +31,7 @@ impl Commands {
   }
 
   pub fn create_entity(&mut self, entity: impl IntoEntity) {
+    #[cfg(feature = "debug")]
     trace!("Registering Create Entity Command");
 
     let id = unsafe { self.world.world_mut() }.reserve_entity_id();
@@ -41,6 +43,7 @@ impl Commands {
   }
 
   pub fn remove_entity(&mut self, entity: EntityId) {
+    #[cfg(feature = "debug")]
     trace!("Registering Remove Entity Command for Entity {}", entity);
 
     self
@@ -49,6 +52,7 @@ impl Commands {
   }
 
   pub fn add_comp(&mut self, entity: EntityId, comp: impl Component) {
+    #[cfg(feature = "debug")]
     trace!(
       "Registering Add Component Command for Entity {} with Component {:?}",
       entity,
@@ -62,6 +66,7 @@ impl Commands {
   }
 
   pub fn remove_comp(&mut self, entity: EntityId, comp: ComponentId) {
+    #[cfg(feature = "debug")]
     trace!(
       "Registering Remove Component Command for Entity {} with Component {:?}",
       entity,
@@ -97,6 +102,7 @@ struct CreateEntityCommand {
 
 impl Command for CreateEntityCommand {
   fn execute(&mut self, storage: &mut Storage) {
+    #[cfg(feature = "debug")]
     trace!("Executing Create Entity Command");
 
     storage.create_entity_with_id(std::mem::take(&mut self.comps).unwrap(), self.id);
@@ -109,6 +115,7 @@ struct RemoveEntityCommand {
 
 impl Command for RemoveEntityCommand {
   fn execute(&mut self, storage: &mut Storage) {
+    #[cfg(feature = "debug")]
     trace!("Executing Remove Entity Command for Entity {}", self.id);
 
     storage.remove_entity(self.id);
@@ -122,6 +129,7 @@ struct AddComponentCommand {
 
 impl Command for AddComponentCommand {
   fn execute(&mut self, storage: &mut Storage) {
+    #[cfg(feature = "debug")]
     trace!(
       "Executing Add Component Command for Entity {} with Component {:?}",
       self.id,
@@ -139,6 +147,7 @@ struct RemoveComponentCommand {
 
 impl Command for RemoveComponentCommand {
   fn execute(&mut self, storage: &mut Storage) {
+    #[cfg(feature = "debug")]
     trace!(
       "Executing Remove Component Command for Entity {} with Component {:?}",
       self.id,

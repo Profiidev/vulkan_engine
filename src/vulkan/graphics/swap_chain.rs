@@ -1,27 +1,23 @@
-use std::collections::HashMap;
-
+use anyhow::Error;
 use ash::{khr, vk};
-use gpu_allocator::vulkan;
 
 use crate::{
   config::app::AppConfig,
-  vulkan::{device::Device, instance::InstanceDevice, surface::Surface},
-  Id,
-};
-
-use super::{
-  pipeline::Pipeline,
-  pools::{CommandBufferType, Pools},
-  resources::model::{InstanceData, ModelManager},
+  vulkan::{
+    device::Device,
+    instance::InstanceDevice,
+    memory::manager::{ImageId, MemoryManager},
+    pipeline::pools::{CommandBufferType, Pools},
+    surface::Surface,
+  },
 };
 
 pub struct SwapChain {
   loader: khr::swapchain::Device,
   swapchain: vk::SwapchainKHR,
   image_views: Vec<vk::ImageView>,
-  depth_image: vk::Image,
-  depth_image_allocation: vulkan::Allocation,
-  depth_image_view: vk::ImageView,
+  #[allow(dead_code)]
+  depth_image: ImageId,
   frame_buffers: Vec<vk::Framebuffer>,
   //surface_format: vk::SurfaceFormatKHR,
   extent: vk::Extent2D,
@@ -38,11 +34,11 @@ impl SwapChain {
     instance_device: &InstanceDevice,
     device: &Device,
     surfaces: &Surface,
-    allocator: &mut vulkan::Allocator,
+    memory_manager: &mut MemoryManager,
     config: &AppConfig,
     pools: &mut Pools,
     render_pass: vk::RenderPass,
-  ) -> Result<Self, vk::Result> {
+  ) -> Result<Self, Error> {
     let physical_device = instance_device.get_physical_device();
     let logical_device = device.get_device();
 
@@ -129,24 +125,6 @@ impl SwapChain {
       .sharing_mode(vk::SharingMode::EXCLUSIVE)
       .queue_family_indices(&queue_families);
 
-    let depth_image = unsafe { logical_device.create_image(&depth_image_create_info, None) }?;
-    let requirements = unsafe { logical_device.get_image_memory_requirements(depth_image) };
-    let allocation_create_desc = vulkan::AllocationCreateDesc {
-      requirements,
-      location: gpu_allocator::MemoryLocation::GpuOnly,
-      linear: true,
-      allocation_scheme: vulkan::AllocationScheme::GpuAllocatorManaged,
-      name: "Depth Image",
-    };
-    let depth_image_allocation = allocator.allocate(&allocation_create_desc).unwrap();
-    unsafe {
-      logical_device.bind_image_memory(
-        depth_image,
-        depth_image_allocation.memory(),
-        depth_image_allocation.offset(),
-      )
-    }?;
-
     let subresource_range = vk::ImageSubresourceRange::default()
       .aspect_mask(vk::ImageAspectFlags::DEPTH)
       .base_mip_level(0)
@@ -154,12 +132,16 @@ impl SwapChain {
       .base_array_layer(0)
       .layer_count(1);
     let depth_image_view_create_info = vk::ImageViewCreateInfo::default()
-      .image(depth_image)
       .view_type(vk::ImageViewType::TYPE_2D)
       .format(vk::Format::D32_SFLOAT)
       .subresource_range(subresource_range);
-    let depth_image_view =
-      unsafe { logical_device.create_image_view(&depth_image_view_create_info, None) }?;
+
+    let depth_image = memory_manager.create_image(
+      gpu_allocator::MemoryLocation::GpuOnly,
+      &depth_image_create_info,
+      &depth_image_view_create_info,
+    )?;
+    let depth_image_view = memory_manager.get_vk_image_view(depth_image).unwrap();
 
     let mut image_available = Vec::new();
     let mut render_finished = Vec::new();
@@ -179,7 +161,7 @@ impl SwapChain {
 
     let mut frame_buffers = Vec::new();
     for image_view in &swapchain_image_views {
-      let vi = [*image_view, depth_image_view];
+      let vi = [*image_view, depth_image_view, *image_view, depth_image_view];
       let frame_buffer_create_info = vk::FramebufferCreateInfo::default()
         .render_pass(render_pass)
         .attachments(&vi)
@@ -210,8 +192,6 @@ impl SwapChain {
       current_image: 0,
       may_begin_drawing,
       depth_image,
-      depth_image_allocation,
-      depth_image_view,
       command_buffer,
     })
   }
@@ -220,14 +200,8 @@ impl SwapChain {
     self.extent
   }
 
-  pub fn destroy(&mut self, logical_device: &ash::Device, allocator: &mut vulkan::Allocator) {
+  pub fn destroy(&mut self, logical_device: &ash::Device) {
     unsafe {
-      logical_device.destroy_image_view(self.depth_image_view, None);
-      logical_device.destroy_image(self.depth_image, None);
-      allocator
-        .free(std::mem::take(&mut self.depth_image_allocation))
-        .unwrap();
-
       for fence in &self.may_begin_drawing {
         logical_device.destroy_fence(*fence, None);
       }
@@ -263,14 +237,11 @@ impl SwapChain {
     }
   }
 
-  pub fn record_command_buffer(
+  pub fn record_command_buffer_first(
     &self,
     device: &ash::Device,
     render_pass: vk::RenderPass,
-    pipeline: &Pipeline,
-    model_manager: &ModelManager,
-    instances: &HashMap<Id, Vec<InstanceData>>,
-  ) -> Result<(), vk::Result> {
+  ) -> Result<vk::CommandBuffer, vk::Result> {
     let buffer = self.command_buffer[self.current_image];
     let buffer_begin_info = vk::CommandBufferBeginInfo::default();
     unsafe {
@@ -301,15 +272,20 @@ impl SwapChain {
 
     unsafe {
       device.cmd_begin_render_pass(buffer, &render_pass_begin_info, vk::SubpassContents::INLINE);
-
-      pipeline.record_command_buffer(buffer, device);
-      model_manager.record_command_buffer(instances, buffer, device);
-
-      device.cmd_end_render_pass(buffer);
-      device.end_command_buffer(buffer)?;
     }
 
-    Ok(())
+    Ok(buffer)
+  }
+
+  pub fn record_command_buffer_second(
+    &self,
+    device: &ash::Device,
+    buffer: vk::CommandBuffer,
+  ) -> Result<(), vk::Result> {
+    unsafe {
+      device.cmd_end_render_pass(buffer);
+      device.end_command_buffer(buffer)
+    }
   }
 
   pub fn draw_frame(&mut self, device: &Device) {

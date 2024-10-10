@@ -2,6 +2,7 @@ use core::panic;
 use std::{collections::VecDeque, marker::PhantomData};
 
 use gravitron_ecs_macros::all_tuples;
+#[cfg(feature = "debug")]
 use log::trace;
 
 use crate::{
@@ -31,6 +32,7 @@ impl<'a, Q: QueryParam<'a> + 'a> IntoIterator for Query<'a, Q> {
   fn into_iter(self) -> Self::IntoIter {
     let world = unsafe { self.world.world_mut() };
 
+    #[cfg(feature = "debug")]
     trace!("Querying Entities {:?}", Q::get_comp_ids());
 
     let entities = world.get_entities_mut(Q::get_comp_ids());

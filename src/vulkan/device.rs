@@ -152,7 +152,10 @@ impl Queues {
           .queue_priorities(&queue_priorities),
       );
     }
-    let mut device_extension_name_ptrs = vec![khr::swapchain::NAME.as_ptr()];
+    let mut device_extension_name_ptrs = vec![
+      khr::swapchain::NAME.as_ptr(),
+      khr::draw_indirect_count::NAME.as_ptr(),
+    ];
     device_extension_name_ptrs.extend(config.device_extensions.iter().map(|ext| ext.as_ptr()));
 
     let features = config.device_features.fill_mode_non_solid(true);

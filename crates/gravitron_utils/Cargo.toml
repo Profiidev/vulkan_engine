@@ -10,3 +10,6 @@ exclude = ["CHANGELOG.md"]
 
 [dependencies]
 log = "0.4.22"
+
+[features]
+debug = []

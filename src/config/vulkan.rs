@@ -1,5 +1,7 @@
 use ash::vk;
 
+pub use vk::{PrimitiveTopology, ShaderStageFlags, VertexInputRate};
+
 #[derive(Default)]
 pub struct VulkanConfig {
   pub renderer: RendererConfig<'static>,
@@ -46,27 +48,46 @@ pub enum PipelineType {
 
 pub struct GraphicsPipelineConfig {
   pub name: String,
-  pub shaders: Vec<ShaderConfig>,
+  pub vert_shader: Option<ShaderConfig>,
+  pub geo_shader: Option<ShaderConfig>,
+  pub frag_shader: Option<ShaderConfig>,
   pub input: Vec<ShaderInputBindings>,
   pub topology: vk::PrimitiveTopology,
-  pub viewport_size: (u32, u32),
+  pub viewport_size: Option<(u32, u32)>,
   pub descriptor_sets: Vec<DescriptorSet>,
 }
 
 impl GraphicsPipelineConfig {
-  pub fn new(name: String, topology: vk::PrimitiveTopology, viewport_size: (u32, u32)) -> Self {
+  pub fn new(name: String, topology: vk::PrimitiveTopology) -> Self {
     Self {
       name,
-      shaders: Vec::new(),
+      vert_shader: None,
+      geo_shader: None,
+      frag_shader: None,
       input: Vec::new(),
       topology,
-      viewport_size,
+      viewport_size: None,
       descriptor_sets: Vec::new(),
     }
   }
 
-  pub fn add_shader(mut self, shader: ShaderConfig) -> Self {
-    self.shaders.push(shader);
+  pub fn set_viewport_size(mut self, viewport_size: (u32, u32)) -> Self {
+    self.viewport_size = Some(viewport_size);
+    self
+  }
+
+  pub fn set_vert_shader(mut self, shader: ShaderConfig) -> Self {
+    self.vert_shader = Some(shader);
+    self
+  }
+
+  pub fn set_geo_shader(mut self, shader: ShaderConfig) -> Self {
+    self.geo_shader = Some(shader);
+    self
+  }
+
+  pub fn set_frag_shader(mut self, shader: ShaderConfig) -> Self {
+    self.frag_shader = Some(shader);
     self
   }
 
